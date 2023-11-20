@@ -1,2 +1,2 @@
 default:
-	g++ -o bin/philosophers src/*.cpp
+	g++ -o bin/philosophers src/*.cpp -std=gnu++20

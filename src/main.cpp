@@ -5,24 +5,32 @@
 #include "defines.h"
 #include <stdlib.h>
 #include <unistd.h>
-#include "overseer.h"
+#include <thread>
+#include <mutex>
+#include <time.h>
+#include "phil_graph.h"
+#include "clock.h"
 
-int philosophers[NUM_PHILS];
+std::mutex cout_mutex;
 
-Overseer overseer;
+PhilGraph phil_graph(NUM_PHILS);
 
-void *philosoper_do(void *arg)
+void philosopher(Philosopher phil)
 {
-    int num_drinks = rand() % MAX_DRINKS;
-    int drink = 0;
-    while (drink < num_drinks)
     {
-        int i = *(int *)arg;
-        sleep(1);
-        overseer.take_drink(i);
-        sleep(0.5);
-        overseer.put_drink(i);
-        drink++;
+        std::lock_guard<std::mutex> gcout(cout_mutex);
+        phil.print_state();
+        std::cout << phil.full_name() << " will need " << phil.num_drinks() << " drinks" << std::endl;
+    }
+    while (phil.drinks_remaining())
+    {
+        milliseconds initial_delay = rand_ms(MIN_WAIT_MS, MAX_WAIT_MS);
+        {
+            std::lock_guard<std::mutex> gcout(cout_mutex);
+            std::cout << phil.full_name() << " will be thirsty in " << std::to_string(initial_delay.count()) << " ms" << std::endl;
+        }
+        std::this_thread::sleep_for(initial_delay);
+        phil.state = Thirsty;
     }
 }
 
@@ -30,30 +38,33 @@ int main()
 {
 
     srand(69);
-    pthread_t thread_id[NUM_PHILS];
-    pthread_attr_t attr;
+    std::vector<std::thread> thread_list;
+    // for (int i = 0; i < NUM_PHILS; ++i)
+    // {
+    //     thread_list.emplace_back([&]
+    //                              { philosopher(Philosopher(i + 1)); });
+    // }
 
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    // for (auto &thread : thread_list)
+    // {
+    //     thread.join();
+    // }
 
-    for (int i = 0; i < NUM_PHILS; i++)
-    {
-        philosophers[i] = i;
-    }
-
-    for (int i = 0; i < NUM_PHILS; i++)
-    {
-        pthread_create(&thread_id[i], &attr, philosoper_do, &philosophers[i]);
-        std::cout << "Philosopher " << i + 1 << "is tranquil..." << std::endl;
-    }
-
-    for (int i = 0; i < NUM_PHILS; i++)
-    {
-        pthread_join(thread_id[i], NULL);
-    }
-
-    pthread_attr_destroy(&attr);
-    pthread_exit(NULL);
+    std::thread t1([&]
+                   { philosopher(Philosopher(1)); });
+    std::thread t2([&]
+                   { philosopher(Philosopher(2)); });
+    std::thread t3([&]
+                   { philosopher(Philosopher(3)); });
+    std::thread t4([&]
+                   { philosopher(Philosopher(4)); });
+    std::thread t5([&]
+                   { philosopher(Philosopher(5)); });
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    t5.join();
 
     return 0;
 }
