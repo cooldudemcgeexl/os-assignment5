@@ -14,4 +14,7 @@ class PhilGraph
 
 public:
     PhilGraph(int num_phils);
+
+    bool is_drink_free(int i, int j);
+    std::mutex *get_lock(int i, int j);
 };

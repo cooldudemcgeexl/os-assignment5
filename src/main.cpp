@@ -31,6 +31,15 @@ void philosopher(Philosopher phil)
         }
         std::this_thread::sleep_for(initial_delay);
         phil.state = Thirsty;
+        {
+            std::lock_guard<std::mutex> gcout(cout_mutex);
+            phil.print_state();
+        }
+        mutex_ptr_pair drink_pair = phil.try_get_available_drink(&phil_graph, &cout_mutex);
+        {
+            std::lock_guard<std::mutex> gdrink1(*drink_pair.first);
+            phil.drink(&cout_mutex);
+        }
     }
 }
 

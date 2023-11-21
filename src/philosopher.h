@@ -2,6 +2,10 @@
 #include "defines.h"
 #include <vector>
 #include <string>
+#include "phil_graph.h"
+#include <utility>
+
+typedef std::pair<std::mutex *, std::mutex *> mutex_ptr_pair;
 
 enum PhilState
 {
@@ -19,8 +23,7 @@ class Philosopher
 public:
     PhilState state;
 
-    int get_left(int phil_num);
-    int get_right(int phil_num);
+    mutex_ptr_pair try_get_available_drink(PhilGraph *phil_graph, std::mutex *cout_mutex);
     int num_drinks();
     int get_num();
     std::string full_name() { return std::string("Philosopher ") + std::to_string(phil_num); }
@@ -35,4 +38,6 @@ public:
 
     void print_state();
     bool drinks_remaining() { return !drink_vec.empty(); };
+
+    void drink(std::mutex *cout_mutex);
 };

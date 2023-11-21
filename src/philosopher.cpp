@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include "clock.h"
+#include <thread>
 
 auto enum_rep(PhilState state)
 {
@@ -17,16 +19,6 @@ auto enum_rep(PhilState state)
         return "Drinking";
     }
     return "Unknown";
-}
-
-int Philosopher::get_left(int phil_num)
-{
-    return (phil_num + 4) % NUM_PHILS;
-}
-
-int Philosopher::get_right(int phil_num)
-{
-    return (phil_num + 1) % NUM_PHILS;
 }
 
 std::vector<int> Philosopher::make_drink_vec(int num_drinks, int num_phils)
@@ -71,5 +63,39 @@ void Philosopher::print_drinks()
 
 void Philosopher::print_state()
 {
-    std::cout << "Philosopher " << phil_num << " is " << enum_rep(state) << std::endl;
+    std::cout << full_name() << " is " << enum_rep(state) << std::endl;
+}
+
+mutex_ptr_pair Philosopher::try_get_available_drink(PhilGraph *phil_graph, std::mutex *cout_mutex)
+{
+    int phil_index = get_phil_index();
+    while (state == PhilState::Thirsty)
+    {
+        for (unsigned i = 0; i < drink_vec.size(); ++i)
+        {
+            auto drink = drink_vec[i];
+            if (phil_graph->is_drink_free(phil_index, drink))
+            {
+                std::cout << full_name() << " getting drink " << drink << std::endl;
+                drink_vec.erase(drink_vec.begin() + i);
+                return std::make_pair(phil_graph->get_lock(phil_index, drink), phil_graph->get_lock(drink, phil_index));
+            }
+        }
+    }
+}
+
+void Philosopher::drink(std::mutex *cout_mutex)
+{
+    this->state = PhilState::Drinking;
+    {
+        std::lock_guard<std::mutex> gcout(*cout_mutex);
+        print_state();
+    }
+    milliseconds drink_time = rand_ms(MIN_WAIT_MS, MAX_WAIT_MS);
+    std::this_thread::sleep_for(drink_time);
+    {
+        std::lock_guard<std::mutex> gcout(*cout_mutex);
+        std::cout << full_name() << " finished drinking" << std::endl;
+    }
+    this->state = PhilState::Tranquil;
 }
