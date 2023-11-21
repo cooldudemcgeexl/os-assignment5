@@ -47,7 +47,6 @@ int main()
 {
 
     srand(time(NULL));
-    std::vector<std::thread> thread_list;
 
     std::thread t1([&]
                    { philosopher(Philosopher(1)); });
