@@ -46,18 +46,8 @@ void philosopher(Philosopher phil)
 int main()
 {
 
-    srand(69);
+    srand(time(NULL));
     std::vector<std::thread> thread_list;
-    // for (int i = 0; i < NUM_PHILS; ++i)
-    // {
-    //     thread_list.emplace_back([&]
-    //                              { philosopher(Philosopher(i + 1)); });
-    // }
-
-    // for (auto &thread : thread_list)
-    // {
-    //     thread.join();
-    // }
 
     std::thread t1([&]
                    { philosopher(Philosopher(1)); });
